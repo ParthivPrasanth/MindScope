@@ -1,0 +1,40 @@
+# ── Virtual environment ───────────────────────────────────────────────────────
+venv/
+.env
+
+# ── Python cache ──────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Jupyter checkpoints ───────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ── Model weight files (too large for GitHub) ─────────────────────────────────
+*.pt
+*.pkl
+*.safetensors
+*.bin
+
+# ── Data files ────────────────────────────────────────────────────────────────
+data/
+*.xlsx
+*.csv
+
+# ── Mac system files ──────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Logs and outputs ─────────────────────────────────────────────────────────
+*.log
+training_curve.png
+
+# ── XGBoost artifacts (share via Drive, not GitHub) ──────────────────────────
+models/xgboost/artifacts/
+
+# ── NLP weights (share via Drive, not GitHub) ────────────────────────────────
+models/nlp_weights/

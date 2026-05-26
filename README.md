@@ -1,168 +1,112 @@
-# MindScope — Multi-Modal Student Depression Assessment System
 
-**CSS 2203 — Introduction to Artificial Intelligence | Group Project**
 
----
+# MindScope: Multi-Modal Depression Assessment
 
-## Overview
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-EE4C2C)
+![HuggingFace](https://img.shields.io/badge/HuggingFace-Transformers-F9AB00)
+![XGBoost](https://img.shields.io/badge/XGBoost-Machine%20Learning-1798D3)
 
-MindScope is a multi-modal machine learning system that predicts depression risk
-in students by combining two independent signals:
+## What is this?
+MindScope is a machine learning pipeline that predicts depression risk by combining traditional survey data with natural language processing. 
 
-1. **Structured survey data** — processed by a fine-tuned XGBoost classifier
-2. **Free-text emotional input** — processed by a fine-tuned DistilBERT NLP model
+This initially started as a group project for my Intro to AI class. However, I ended up taking ownership of the NLP models, the neural fusion layer, and the underlying inference architecture. I’ve spun my contributions out into this standalone repository to highlight the specific systems I built.
 
-The outputs of both models are passed into a **fusion neural network** (PyTorch)
-that produces a two-stage prediction:
-- Stage 1: Binary — depressed or not depressed
-- Stage 2: Severity level — Minimal, Mild, Moderate, Severe, or Extremely Severe
+## How it Works
+Clinical surveys can be rigid, so I wanted to see if we could get better predictions by combining them with free-form text. The system splits the work into two independent branches:
 
-Severity is assessed using the **PHQ-9** clinical framework.
+1. **The Tabular Branch:** An XGBoost classifier that handles structured clinical survey data.
+2. **The NLP Branch:** A DistilBERT model (fine-tuned using Hugging Face) that reads unstructured text input to look for emotional distress markers.
 
----
+Instead of just averaging their scores, I built a **late-fusion neural network** using PyTorch. It takes the probability outputs from both branches, weighs them against each other, and outputs a two-stage prediction:
+* **Stage 1:** Binary (Depressed vs. Not Depressed)
+* **Stage 2:** Severity Level (Minimal, Mild, Moderate, Severe, or Extremely Severe, calibrated using the PHQ-9 clinical framework).
 
-## Team
+```text
+User Survey Input ──► XGBoost Classifier ──► P(tabular) ──┐
+                                                          ├──► PyTorch Fusion Net ──► Binary + Severity
+User Free Text    ──► DistilBERT Model   ──► P(text)    ──┘
 
-| Name | Roll No. | Reg No. | Responsibility |
-|------|----------|---------|----------------|
-| Siddharth Anand | 22 | 240905144 | Fusion layer, data pipeline, Google Form |
-| Abhirup Bhattacharya | 57 | 240905556 | Report |
-| Anurimaa Pewekar | 58 | 240905582 | XGBoost model, SHAP |
-| Parthiv Prasanth | 47 | 240905450 | NLP model (DistilBERT) |
-| Arnav Gandotra | 50 | 240905490 | UI, deployment |
+```
 
----
+## My Contributions
+
+If you are looking through the codebase, these are the primary pieces I designed and wrote:
+
+* **`nlp_wrapper.py`:** The DistilBERT inference class. It handles tokenization, attention masking, and extracts the probability metrics from the text.
+* **`fusion_model.py` & `train_fusion.py`:** The PyTorch Multi-Layer Perceptron (MLP) that acts as the brain of the operation, merging the two different data types.
+* **`predict.py`:** The end-to-end inference script that successfully decouples the models, allowing them to run independently before feeding into the fusion layer.
 
 ## Project Structure
 
-```
-mindscope_fusion/
+```text
+mindscope/
 │
 ├── models/
-│   ├── nlp_weights/          ← DistilBERT weights (not in repo, share via Drive)
-│   │   ├── config.json
-│   │   ├── model.safetensors
-│   │   ├── tokenizer_config.json
-│   │   └── tokenizer.json
-│   │
+│   ├── nlp_weights/          ← DistilBERT weights (config, safetensors, tokenizer)
 │   └── xgboost/
-│       ├── artifacts/        ← XGBoost artifacts (not in repo, share via Drive)
-│       │   ├── encoder.pkl
-│       │   ├── feature_columns.pkl
-│       │   ├── xgb_model.json
-│       │   ├── xgb_feature_weights.csv
-│       │   └── xgb_detailed_importance.csv
-│       └── src/
-│           ├── config.py
-│           ├── data_utils.py
-│           ├── predict_model.py
-│           ├── train_model.py
-│           └── model_info.py
+│       ├── artifacts/        ← XGBoost artifacts (encoder, weights, importance)
+│       └── src/              ← Tabular model source code
 │
-├── data/                     ← Survey data (not in repo, share via Drive)
-│   └── survey_data.xlsx
+├── nlp_wrapper.py            ← DistilBERT inference class & probability extraction
+├── xgboost_wrapper.py        ← Tabular data formatting & XGBoost inference
+├── fusion_model.py           ← PyTorch Multi-Layer Perceptron (MLP) fusion architecture
+├── train_fusion.py           ← PyTorch training loop, loss calculation, and optimization
+├── predict.py                ← End-to-end multi-modal prediction pipeline
+├── generate_synthetic.py     ← Data augmentation script for fusion layer training
 │
-├── nlp_wrapper.py            ← Loads DistilBERT, exposes get_depression_probability()
-├── xgboost_wrapper.py        ← Loads XGBoost, translates survey input format
-├── fusion_model.py           ← FusionNetwork architecture definition
-├── train_fusion.py           ← Full training pipeline
-├── predict.py                ← End-to-end single prediction
-├── generate_synthetic_data.py← Generates synthetic training data
-│
-├── best_fusion_model.pt      ← Trained fusion weights (not in repo, share via Drive)
-├── training_curve.png        ← Generated after training
-│
-├── .gitignore
 ├── requirements.txt
 └── README.md
+
 ```
 
----
+## Setup & Local Inference
 
-## Setup Instructions
-
-### 1. Clone the repository
+**1. Set up the environment**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/mindscope_fusion.git
-cd mindscope_fusion
-```
-
-### 2. Create and activate virtual environment
-
-```bash
+git clone [https://github.com/YOUR_USERNAME/Mindscope.git](https://github.com/YOUR_USERNAME/Mindscope.git)
+cd Mindscope
 python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-### 4. Add model weights and data
-
-The following files are **not included in this repository** due to size constraints.
-Download them from the shared Google Drive folder and place them as shown:
 
 ```
-models/nlp_weights/          ← 4 files from NLP model Drive folder
-models/xgboost/artifacts/    ← 5 files from XGBoost model Drive folder
-data/survey_data.xlsx        ← survey data file
-best_fusion_model.pt         ← trained fusion weights
-```
 
-### 5. Train the fusion model
+**2. Download the Model Weights**
+*Note: Due to GitHub's file size limits, my fine-tuned `.safetensors` and PyTorch `.pt` weights are hosted externally.* Download them and place them in `models/nlp_weights/` and `models/xgboost/artifacts/`.
 
-```bash
-python train_fusion.py
-```
-
-### 6. Run a test prediction
+**3. Run a Prediction**
+Execute the end-to-end prediction passing both text and survey data through the respective models and into the fusion layer:
 
 ```bash
 python predict.py
-```
-
----
-
-## Model Architecture
 
 ```
-User Survey Input ──► XGBoostModel ──► P(depression) ──┐
-                                                        ├──► FusionNetwork ──► Binary + Severity
-User Free Text   ──► DistilBERT   ──► P(depression) ──┘
-```
 
-The fusion network takes two probability values as input (one per branch)
-and produces a two-stage classification output.
+## Datasets Used
 
----
+To make sure each branch was an "expert" in its domain before fusing them, the models were trained independently:
 
-## Datasets
-
-| Dataset | Source | Used For |
-|---------|--------|----------|
-| Student Depression Dataset | Kaggle (adilshamim8) | XGBoost branch training |
-| Sentiment Analysis for Mental Health | Kaggle (suchintikasarkar) | DistilBERT branch training |
-| Synthetic paired survey data | Generated (generate_synthetic_data.py) | Fusion layer training |
-
----
+| Component | Architecture | Training Data Source |
+| --- | --- | --- |
+| **NLP Branch** | DistilBERT | Kaggle: Sentiment Analysis for Mental Health |
+| **Tabular Branch** | XGBoost | Kaggle: Student Depression Dataset |
+| **Fusion Layer** | PyTorch MLP | Augmented synthetic paired distributions |
 
 ## Ethical Safeguards
 
-- All outputs include a disclaimer that this is not a clinical diagnosis
-- Severe and Extremely Severe results display the iCall helpline (9152987821)
-- A confidence threshold withholds predictions when the model is uncertain
-- No user data is stored or logged
+Building AI for mental health requires strict ethical boundaries. I implemented the following safeguards in this architecture:
+
+* **Hardcoded Disclaimers:** All outputs include a disclaimer that this is a computational tool, not a clinical diagnosis.
+* **Intervention Triggers:** Severe and Extremely Severe results automatically display the iCall helpline (9152987821).
+* **Confidence Thresholds:** The model withholds predictions if the fusion network is uncertain.
+* **Zero-Logging:** No user data, text inputs, or predictions are stored or logged.
 
 ---
 
-## Requirements
+*Disclaimer: This project is for educational purposes only and is not intended for clinical use.*
 
-See `requirements.txt` for the full dependency list.
+```
 
----
-
-*This project is for educational purposes only and is not intended for clinical use.*
+```

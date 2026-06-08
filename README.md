@@ -29,13 +29,6 @@ User Free Text    ──► DistilBERT Model   ──► P(text)    ──┘
 
 ```
 
-## My Contributions
-
-If you are looking through the codebase, these are the primary pieces I designed and wrote:
-
-* **`nlp_wrapper.py`:** The DistilBERT inference class. It handles tokenization, attention masking, and extracts the probability metrics from the text.
-* **`fusion_model.py` & `train_fusion.py`:** The PyTorch Multi-Layer Perceptron (MLP) that acts as the brain of the operation, merging the two different data types.
-* **`predict.py`:** The end-to-end inference script that successfully decouples the models, allowing them to run independently before feeding into the fusion layer.
 
 ## Project Structure
 
